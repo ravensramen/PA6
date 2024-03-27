@@ -1,8 +1,5 @@
 #include "header.h"
 
-//FIX RANDOM SHIP PLACEMENT
-
-
 //Function Name: void menu_choice(int *choice)
 //Description: Displays main menu options to console and uses a pointer to store the user's choice
 //Parameters: Address of the choice variable
@@ -37,12 +34,21 @@ void display_rules(void) {
 //Parameters: N/A
 //Output: N/A Runs a round of battleship.
 
-void battleship_gameplay(char player_1_gameboard[][NUM_COLS], char player_2_gameboard[][NUM_COLS]) {
+void battleship_gameplay(char player_1_gameboard[][NUM_COLS], char player_2_gameboard[][NUM_COLS], char player_2_display_gameboard[][NUM_COLS]) {
 
 	int starts_first = 0;
 	int place_type = 0;
 
+	int x_position = 0, y_position = 0;
+
+
+	Stats player_one = { 0, 0, 0, 0.0 };
+
 	initialize_game_board(player_1_gameboard, NUM_ROWS, NUM_COLS); //initialize player 1's gameboard
+	initialize_game_board(player_2_gameboard, NUM_ROWS, NUM_COLS); //initialize computer's gameboard
+
+	initialize_game_board(player_2_display_gameboard, NUM_ROWS, NUM_COLS); //initialize player 2's displayed board
+
 	select_who_starts_first(&starts_first); //randomly decides who starts first
 	print_board(player_1_gameboard, NUM_ROWS, NUM_COLS); //prints player 1's gameboard
 	
@@ -56,7 +62,16 @@ void battleship_gameplay(char player_1_gameboard[][NUM_COLS], char player_2_game
 	if (place_type == 2) {
 		
 		random_place(player_1_gameboard, NUM_ROWS, NUM_COLS);
+		print_board(player_1_gameboard, NUM_ROWS, NUM_COLS);
 	}
+
+	random_place(player_2_gameboard, NUM_ROWS, NUM_COLS); //randomly assigns computer's gameboard
+
+	//printf("player 2: ");//DEBUG DELETE MEH
+	//print_board(player_2_gameboard, NUM_ROWS, NUM_COLS); //FOR DEBUG DELETE ME
+
+	printf("Enter cordinates to hit: \n");
+	scanf("%d%d", &x_position, &y_position);
 
 
 	return; //return back to menu when gameplay is done
@@ -449,10 +464,6 @@ void random_place(char board[NUM_ROWS][NUM_COLS]) {
 			} while (placing); //continues to randomly place ships 
 		}
 
-
-
-
-		print_board(board, NUM_ROWS, NUM_COLS); //prints the new board to console
 	}
 
 
@@ -473,14 +484,14 @@ void horizontal_or_vertical(int* direction) {
 	*direction = value;
 }
 
-int detect_collision(char board[][NUM_COLS], int direction, int ship_length, int row, int col) {
+int detect_collision(char board[ ][NUM_COLS], int direction, int ship_length, int row, int col) {
 	int valid = 0;
 	if (direction == 0) {//if direction is horizontal
 		for (int i = 0; i < ship_length; i++) {
 			if (board[row][col+i] != '~') { //if placement not available
 				valid = 0; //invalid
 			}
-			else if (board[row][col+1] == '~') //placement is available
+			else if (board[row][col+i] == '~') //placement is available
 				valid = 1; //placement is valid
 		}
 	}
@@ -500,12 +511,12 @@ int detect_collision(char board[][NUM_COLS], int direction, int ship_length, int
 void place_ship(char board[][NUM_COLS], int num_rows, int num_cols, int ship_lengths, char ship_symbols, int direction, int row_start, int col_start) {
 	if (direction == 0) {
 		for (int i = 0; i < ship_lengths; i++) {
-			board[row_start][col_start+1] = ship_symbols; //prints the ship symbol starting at the correct row and subsequent columns
+			board[row_start][col_start+i] = ship_symbols; //prints the ship symbol starting at the correct row and subsequent columns
 		}
 	}
 	else if (direction == 1) {
 		for (int i = 0; i < ship_lengths; i++) {
-			board[row_start+1][col_start] = ship_symbols; //prints the ship symbol starting at the correct column and subsequent rows
+			board[row_start+i][col_start] = ship_symbols; //prints the ship symbol starting at the correct column and subsequent rows
 		}
 	}
 }
