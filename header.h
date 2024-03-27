@@ -21,6 +21,14 @@
 #define SUBMARINE_LENGTH 3
 #define DESTROYER_LENGTH 2
 
+//struct for storing stats of each player
+
+typedef struct {
+	int number_hits, number_misses, total_shots; 
+	double hits_misses;
+
+}Stats;
+
 /////
 //Function Name: 
 //Description: 
@@ -49,7 +57,7 @@ void display_rules(void);
 
 //void battleship_gameplay(void); //CHANGE MAYBE FHDGJFHJHFJKLASD
 
-void battleship_gameplay(char player_1_gameboard[][NUM_COLS], char player_2_gameboard[][NUM_COLS]);
+void battleship_gameplay(char player_1_gameboard[][NUM_COLS], char player_2_gameboard[][NUM_COLS], char player_2_display_gameboard[][NUM_COLS]);
 
 //Function Name: void initialize_game_board(char board[10][10], int num_rows, int num_columns)
 //Description: Initializes the players gameboard at the start of each round.
@@ -108,4 +116,4 @@ void horizontal_or_vertical(int* direction);
 
 int detect_collision(char board[][NUM_COLS], int direction, int ship_length, int row, int col);
 
-void place_ship(char board[][NUM_COLS], int num_rows, int num_cols, int ship_lengths, char ship_symbols, int direction, int ro
+void place_ship(char board[][NUM_COLS], int num_rows, int num_cols, int ship_lengths, char ship_symbols, int direction, int row_start, int col_start);
