@@ -1,3 +1,6 @@
+//SET UP STRUCT, WORK ON SHOOTING SYSTEM,, review typedef in structs
+
+
 #include "header.h"
 
 int main() {
@@ -8,6 +11,8 @@ int main() {
 
 	char player_1_gameboard[NUM_ROWS][NUM_COLS] = { {'\0'} }; //player's gameboard
 	char player_2_gameboard[NUM_ROWS][NUM_COLS] = { {'\0'} }; //computer's gameboard
+	char player_2_display_gameboard[NUM_ROWS][NUM_COLS] = { {'\0'} }; //computer's displayed board
+
 	int choice = 0; //initialize choice variable
 
 	do {
@@ -18,8 +23,10 @@ int main() {
 			display_rules(); //function to display rules
 			break;
 		case 2:
-			battleship_gameplay(player_1_gameboard, player_2_gameboard); //main gameplay function
-			break;
+			battleship_gameplay(player_1_gameboard, player_2_gameboard, player_2_display_gameboard); //main gameplay function
+			
+			return 0; //for debug delete me
+			/*break;*/
 		case 3:
 			printf("Goodbye..."); //goodbye message
 			break;
