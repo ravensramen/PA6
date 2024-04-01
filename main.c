@@ -1,11 +1,8 @@
-//SET UP STRUCT, WORK ON SHOOTING SYSTEM,, review typedef in structs
-
-
 #include "header.h"
 
 int main() {
 
-	srand((time(NULL))); //allows random boat placement and shots by the computer player
+	srand((unsigned int)(time(NULL))); //allows random boat placement and shots by the computer player
 
 	printf("Welcome to Battleship!\n\n"); //Welcome message upon first launch
 
@@ -24,9 +21,8 @@ int main() {
 			break;
 		case 2:
 			battleship_gameplay(player_1_gameboard, player_2_gameboard, player_2_display_gameboard); //main gameplay function
+			break;
 			
-			return 0; //for debug delete me
-			/*break;*/
 		case 3:
 			printf("Goodbye..."); //goodbye message
 			break;
