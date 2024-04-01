@@ -1,4 +1,4 @@
-//Name: Sydnee Boothby
+/Name: Sydnee Boothby
 //Assignment: Programming Assignment 6: Battleship
 //Date: 03/22/2024
 //Description: Use user based functions, arrays, pointers, repetition/iteration loops/structures, file reading and other c functions learned thus far in CptS 121 to produce battleship gameplay. 
@@ -29,12 +29,6 @@ typedef struct {
 
 }Stats;
 
-/////
-//Function Name: 
-//Description: 
-//Parameters: 
-//Output:  
-//////
 
 //Function Name: void menu_choice(int *choice)
 //Description: Displays main menu options to console and uses a pointer to store the user's choice
@@ -108,12 +102,84 @@ int check_placement(char board[][NUM_COLS], int coordinates[], int ship_size);
 
 void bubble_sort(int arr[], int size);
 
+//Function Name: void random_place(char board[NUM_ROWS][NUM_COLS])
+//Description: Randomly places fleet on board. 
+//Parameters: Character array board. 
+//Output: Randomly generated board. 
+
 void random_place(char board[NUM_ROWS][NUM_COLS]);
+
+//Function Name: void generate_random_point(int direction, int ship_length, int* row, int* column)
+//Description: Generates random rows and columns to place ships. 
+//Parameters: Variables coresponding to direction, ship lengths, pointers to row and column variables. 
+//Output: Random row and columns for ships. 
 
 void generate_random_point(int direction, int ship_length, int* row, int* column);
 
+//Function Name: void horizontal_or_vertical(int* direction)
+//Description: Randomly determines if boat will be placed horizontally or vertically. 
+//Parameters: Pointer to direction variable (for random placement)
+//Output: 0 for horizontal, 1 for vertical. 
+
 void horizontal_or_vertical(int* direction); 
+
+//Function Name: int detect_collision(char board[ ][NUM_COLS], int direction, int ship_length, int row, int col)
+//Description: Determines if boat placement is valid (not taken already by another ship)
+//Parameters: Character array board, direction of ship, ship length, row and column of ship. 
+//Output: Determines if placement is valid or not. 
 
 int detect_collision(char board[][NUM_COLS], int direction, int ship_length, int row, int col);
 
+//Function Name: void place_ship(char board[][NUM_COLS], tint num_rows, int num_cols, int ship_lengths, char ship_symbols, int direction, int row_start, int col_start)
+//Description: If random ship placement is valid, symbols/token printed on board
+//Parameters: Character array board, number of rows/columns, ship lengths + symbols, ship direction, row and column start. 
+//Output: Places ships on board. 
+
 void place_ship(char board[][NUM_COLS], int num_rows, int num_cols, int ship_lengths, char ship_symbols, int direction, int row_start, int col_start);
+
+//Function Name: int check_shots(char board[][NUM_COLS], int x_position, int y_position, char* ship_hit)
+//Description: Checks if player 1's shots hit any of the computer's fleet. 
+//Parameters: Computer's board, cordinates of shot, ship_hit pointer variable
+//Output: Marks hits or misses, informs player of a repeated shot
+
+int check_shots(char board[][NUM_COLS], int x_position, int y_position, char* ship_hit);
+
+//Function Name: int check_shots(char board[][NUM_COLS], int x_position, int y_position, char* ship_hit)
+//Description: Checks if player 1's shots hit any of the computer's fleet. 
+//Parameters: Computer's board, cordinates of shot, ship_hit pointer variable
+//Output: Marks hits or misses, informs player of a repeated shot
+
+int check_if_sunk(char board[][NUM_COLS], char ship_token);
+
+//Function Name: int check_if_sunk(char board[][NUM_COLS], char ship_token)
+//Description: Determines if any ships have been sunk after each shot. 
+//Parameters: Character array of player board, ship token/character symbol to look for. 
+//Output: Determines if a ship was sunk (1 if sunk, 0 if not)
+
+void update_board(char board[][NUM_COLS], int x_position, int y_position, int was_hit);
+
+//Function Name: void update_board(char board[][NUM_COLS], int x_position, int y_position, int was_hit)
+//Description: Updates player or computer board based on whether shots were hits or misses. 
+//Parameters: Character array board, cordinates of shots, hit or miss variable. 
+//Output: Marks the shot as either a hit "*" or a miss "M"
+
+int determine_winner(char board[][NUM_COLS]);
+
+//Function Name: int determine_winner(char board[][NUM_COLS])
+//Description: Determines if either player has won by checking the number of hits. (17 to destroy all ships)
+//Parameters: Character array board. 
+//Output: 1 if a win, 0 if not a win. 
+
+void output_current_move(FILE* outfile, int starts_first, int x_position, int y_position, int was_hit, int was_sunk);
+
+//Function Name: void output_current_move(FILE* outfile, int starts_first, int x_position, int y_position, int was_hit, int was_sunk)
+//Description: Writes the summary of each move to the battleship.log file. 
+//Parameters: Outfile, variables coresponding to current player, shot cordinates, info on whether it was a hit/miss or sunk any ships. 
+//Output: Writes all above info to the oufile. 
+
+void output_stats(FILE* outfile, Stats player_one, Stats player_two);
+
+//Function Name: void output_stats(FILE* outfile, Stats player_one, Stats player_two)
+//Description: Writes all the game stats/data to the log file. 
+//Parameters: Pointer to outfile, stats struct of player one and computer. 
+//Output: Writes all round info to the outfile. 
