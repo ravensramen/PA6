@@ -36,46 +36,160 @@ void display_rules(void) {
 
 void battleship_gameplay(char player_1_gameboard[][NUM_COLS], char player_2_gameboard[][NUM_COLS], char player_2_display_gameboard[][NUM_COLS]) {
 
-	int starts_first = 0;
-	int place_type = 0;
+	FILE* outfile = fopen("battleship.log", "w"); //opens log file
 
-	int x_position = 0, y_position = 0;
+	int starts_first = 0; //randomly selects first player, determines which player is going
+	int place_type = 0; //allows user to manually place ships or randomly generate placement
 
 
-	Stats player_one = { 0, 0, 0, 0.0 };
+	int x_position = 0, y_position = 0; //for shooting
+
+	int was_hit = 0, was_sunk = 0; //determines if computer and player shots were hits and if they sunk boats
+	int generating = 0; //for computer to randomly generate targetes
+
+	char ship_hit = '/0';
+
+	bool has_won = false, has_lost = false; //boolean for whether or not the player has won or lost, continues gameplay loop
+
+	int computer_has_tried[NUM_ROWS][NUM_COLS] = { {0} }; //keeps track of where the computer has already randomly shot at
+
+	Stats player_one = { 0, 0, 0, 0.0 }; //initialize stat structures
+	Stats player_two = { 0, 0, 0, 0.0 };
 
 	initialize_game_board(player_1_gameboard, NUM_ROWS, NUM_COLS); //initialize player 1's gameboard
 	initialize_game_board(player_2_gameboard, NUM_ROWS, NUM_COLS); //initialize computer's gameboard
 
 	initialize_game_board(player_2_display_gameboard, NUM_ROWS, NUM_COLS); //initialize player 2's displayed board
 
-	select_who_starts_first(&starts_first); //randomly decides who starts first
-	print_board(player_1_gameboard, NUM_ROWS, NUM_COLS); //prints player 1's gameboard
-	
+
 	choose_place_type(&place_type); //prompts user to choose manual or random placement
 
-	if (place_type == 1) {
-		/*printf("manual placement");*/
+	//player chose manual
+	if (place_type == 1) { 
+		
 		manual_place(player_1_gameboard, NUM_ROWS, NUM_COLS);
 	}
 
+	//player chose random
 	if (place_type == 2) {
-		
+
 		random_place(player_1_gameboard, NUM_ROWS, NUM_COLS);
-		print_board(player_1_gameboard, NUM_ROWS, NUM_COLS);
 	}
 
 	random_place(player_2_gameboard, NUM_ROWS, NUM_COLS); //randomly assigns computer's gameboard
 
-	//printf("player 2: ");//DEBUG DELETE MEH
-	//print_board(player_2_gameboard, NUM_ROWS, NUM_COLS); //FOR DEBUG DELETE ME
+	printf("Okie dokie, here's what your board looks like: \n");
+	print_board(player_1_gameboard, NUM_ROWS, NUM_COLS);
+	system("pause");
 
-	printf("Enter cordinates to hit: \n");
-	scanf("%d%d", &x_position, &y_position);
+	select_who_starts_first(&starts_first); //randomly decides who starts first
 
+	system("pause");
+	system("cls");
 
-	return; //return back to menu when gameplay is done
+	while (!has_won || !has_lost) { //while outcome has yet to be decided
+
+		switch (starts_first) {
+		case 1:
+			printf("Your Current Board: \n");
+			print_board(player_1_gameboard, NUM_ROWS, NUM_COLS);
+			printf("My Current Board: \n");
+			print_board(player_2_display_gameboard, NUM_ROWS, NUM_COLS);
+
+			printf("Enter a target of my board to hit (row, column): Hit enter after each integer \n");
+			scanf("%d%d", &x_position, &y_position);
+
+			player_one.total_shots++;
+
+			was_hit = check_shots(player_2_gameboard, x_position, y_position, &ship_hit);
+			was_sunk = check_if_sunk(player_2_gameboard, ship_hit);
+
+			update_board(player_2_gameboard, x_position, y_position, was_hit);
+			update_board(player_2_display_gameboard, x_position, y_position, was_hit);
+
+			if (was_hit) {
+				player_one.number_hits++;
+				printf("Hit!\n");
+				if (was_sunk) {
+					printf("You sunk my ship with indicated by %c! How RUDE!!\n", ship_hit);
+				}
+			}
+			else {
+				player_one.number_misses++;
+				printf("Miss... womp womp..\n");
+			}
+			system("pause");
+			system("cls");
+
+			output_current_move(outfile, starts_first, x_position, y_position, was_hit, was_sunk);
+
+			if (determine_winner(player_2_gameboard)) { //check to see if player one has satisfied winning conditions by hitting all of the computer's gameboard
+				printf("You won!\n");
+				system("pause");
+				has_won = 1;
+				goto breakout; //writes game summary to outfile
+			}
+			starts_first = 2; //switches to player 2 (computer)
+			break;
+
+		case 2: //computer's turn
+			generating = 1;
+			while (generating) {
+				x_position = rand() % 10; //chooses a random x position out of the 10 possible
+				y_position = rand() % 10; //chooses a random y
+
+				if (computer_has_tried[x_position][y_position] != 1) { //if computer hasn't already shot at this random location
+					computer_has_tried[x_position][y_position] = 1; //location cannot be used again
+					generating = 0; //generation process is finished
+				}
+			}
+			player_two.total_shots++;//adds one to the computer's total shots
+			was_hit = check_shots(player_1_gameboard, x_position, y_position, &ship_hit); //checks if shot hit
+			was_sunk = check_if_sunk(player_1_gameboard, ship_hit); //checks if ships sank
+
+			if (was_hit) { //if hit
+				player_two.number_hits++; //add one to hit stats
+				printf("I shot at (%d, %d). It was a hit!! :P \n", x_position, y_position);
+				if (was_sunk) {
+					printf("I shot at (%d, %d) It was a hit AND I sunk your ship!! >:)\n", x_position, y_position);
+				}
+			}
+			else {
+				player_two.number_misses++; //add one to the total misses stat
+				printf("I shot at (%d, %d) It was a miss... You're safe for now.. \n", x_position, y_position);
+			}
+
+			system("pause");
+			system("cls");
+
+			update_board(player_1_gameboard, x_position, y_position, was_hit);
+
+			if (determine_winner(player_1_gameboard)) { //if all computer has reached 17 hits 
+				printf("You lost, I sank your fleet... Mwauahahah\n\n");
+				system("pause");
+				has_lost = 1;
+				goto breakout; //writes game summary to outfile
+			}
+			output_current_move(outfile, starts_first, x_position, y_position, was_hit, was_sunk);
+			starts_first = 1; //switches back to player 1's turn
+			break;
+		}
+	}
+
+breakout:
+
+	printf("Statistics added to the logfile! ...");
+	
+	player_one.hits_misses = ((double)player_one.number_hits / player_one.total_shots) * 100; //calculates ratio of hits and misses for both players, writes as a percent
+	player_two.hits_misses = ((double)player_two.number_hits / player_two.total_shots) * 100;
+
+	output_stats(outfile, player_one, player_two); //writes all the game stats stored in player structs to the outfile
+	fclose(outfile); //closes file
+
+	return; //go back to main after game is over
 }
+
+
 
 //Function Name: void initialize_game_board(char board[10][10], int num_rows, int num_columns)
 //Description: Initializes the players gameboard at the start of each round.
@@ -439,6 +553,11 @@ void bubble_sort(int arr[], int size) {
 	}
 }
 
+//Function Name: void random_place(char board[NUM_ROWS][NUM_COLS])
+//Description: Randomly places fleet on board. 
+//Parameters: Character array board. 
+//Output: Randomly generated board. 
+
 void random_place(char board[NUM_ROWS][NUM_COLS]) {
 
 	int row_start = 0, col_start = 0; //integers coresponding to cordinates chosen
@@ -456,9 +575,9 @@ void random_place(char board[NUM_ROWS][NUM_COLS]) {
 
 			do {
 				generate_random_point(direction, ship_lengths[i], &row_start, &col_start);
-				if (detect_collision(board, direction, ship_lengths[i], row_start, col_start) == 1)  {
-					place_ship(board, NUM_ROWS, NUM_COLS, ship_lengths[i], ship_symbols[i], direction, row_start, col_start);
-					placing = false;
+				if (detect_collision(board, direction, ship_lengths[i], row_start, col_start) == 1)  { //determines if position is valid
+					place_ship(board, NUM_ROWS, NUM_COLS, ship_lengths[i], ship_symbols[i], direction, row_start, col_start); //if valid, places ship 
+					placing = false; 
 				}
 
 			} while (placing); //continues to randomly place ships 
@@ -466,6 +585,10 @@ void random_place(char board[NUM_ROWS][NUM_COLS]) {
 
 	}
 
+//Function Name: void generate_random_point(int direction, int ship_length, int* row, int* column)
+//Description: Generates random rows and columns to place ships. 
+//Parameters: Variables coresponding to direction, ship lengths, pointers to row and column variables. 
+//Output: Random row and columns for ships. 
 
 void generate_random_point(int direction, int ship_length, int* row, int* column) {
 	if (direction == 1) { //if random direction is horizontal
@@ -478,11 +601,21 @@ void generate_random_point(int direction, int ship_length, int* row, int* column
 	}
 }
 
+//Function Name: void horizontal_or_vertical(int* direction)
+//Description: Randomly determines if boat will be placed horizontally or vertically. 
+//Parameters: Pointer to direction variable (for random placement)
+//Output: 0 for horizontal, 1 for vertical. 
+
+
 void horizontal_or_vertical(int* direction) {
 	int value = rand() % 2; //returns either a 0 (horizontal) or a 1 (vertical)
 
-	*direction = value;
+	*direction = value; 
 }
+//Function Name: int detect_collision(char board[ ][NUM_COLS], int direction, int ship_length, int row, int col)
+//Description: Determines if boat placement is valid (not taken already by another ship)
+//Parameters: Character array board, direction of ship, ship length, row and column of ship. 
+//Output: Determines if placement is valid or not. 
 
 int detect_collision(char board[ ][NUM_COLS], int direction, int ship_length, int row, int col) {
 	int valid = 0;
@@ -508,6 +641,11 @@ int detect_collision(char board[ ][NUM_COLS], int direction, int ship_length, in
 	return valid;
 }
 
+//Function Name: void place_ship(char board[][NUM_COLS], tint num_rows, int num_cols, int ship_lengths, char ship_symbols, int direction, int row_start, int col_start)
+//Description: If random ship placement is valid, symbols/token printed on board
+//Parameters: Character array board, number of rows/columns, ship lengths + symbols, ship direction, row and column start. 
+//Output: Places ships on board. 
+
 void place_ship(char board[][NUM_COLS], int num_rows, int num_cols, int ship_lengths, char ship_symbols, int direction, int row_start, int col_start) {
 	if (direction == 0) {
 		for (int i = 0; i < ship_lengths; i++) {
@@ -519,4 +657,161 @@ void place_ship(char board[][NUM_COLS], int num_rows, int num_cols, int ship_len
 			board[row_start+i][col_start] = ship_symbols; //prints the ship symbol starting at the correct column and subsequent rows
 		}
 	}
+}
+
+//Function Name: int check_shots(char board[][NUM_COLS], int x_position, int y_position, char* ship_hit)
+//Description: Checks if player 1's shots hit any of the computer's fleet. 
+//Parameters: Computer's board, cordinates of shot, ship_hit pointer variable
+//Output: Marks hits or misses, informs player of a repeated shot
+
+int check_shots(char board[][NUM_COLS], int x_position, int y_position, char* ship_hit) {
+	for (int i = 0; i < NUM_ROWS; i++) {
+		for (int j = 0; j < NUM_COLS; j++) {
+			if (i == x_position && j == y_position) {
+				if (board[i][j] != '~') { //if spot is not empty 
+					if (board[i][j] != 'M' && board[i][j] != '*') {//if spot on board isn't already shot at (M), or hit (*_
+						*ship_hit = board[i][j]; //dereferences ship_hit address, marks ship as hit at location[i][j]
+						return 1; //returns was hit as 1 >ship is hit
+					}
+					else if (board[i][j] == 'M' || board[i][j] == '*') { //if spot has already been shot at
+						printf("You already shot there silly! Guess you wasted a turn... :P\n"); //ridicule the player >:)
+						if (board[i][j] == 'M') {
+							return 0;  //remains the spot as a miss
+						}
+						if (board[i][j] == '*') {
+							return 1; //remains the spot as a hit
+						}
+					}
+					
+				}
+			}
+		}
+	}
+	return 0; //returns was_hit as 0, ship was not hit
+
+}
+
+//Function Name: int check_if_sunk(char board[][NUM_COLS], char ship_token)
+//Description: Determines if any ships have been sunk after each shot. 
+//Parameters: Character array of player board, ship token/character symbol to look for. 
+//Output: Determines if a ship was sunk (1 if sunk, 0 if not)
+
+int check_if_sunk(char board[][NUM_COLS], char ship_token) {
+	int token_count = 0;
+	for(int i = 0; i < NUM_ROWS; i++) {
+		for (int j = 0; j < NUM_COLS; j++) {
+			if (board[i][j] == ship_token) { //if any ship symbol is left (unchanged to a hit symbol)
+				token_count++;
+			}
+		}
+	}
+	if (token_count == 1) {
+		return 1; //If at least one ship symbol left, boat is not yet sunk
+	}
+	return 0; 
+
+}
+
+//Function Name: void update_board(char board[][NUM_COLS], int x_position, int y_position, int was_hit)
+//Description: Updates player or computer board based on whether shots were hits or misses. 
+//Parameters: Character array board, cordinates of shots, hit or miss variable. 
+//Output: Marks the shot as either a hit "*" or a miss "M"
+
+void update_board(char board[][NUM_COLS], int x_position, int y_position, int was_hit) {
+	char ship_token = '\0';
+	for (int i = 0; i < NUM_ROWS; i++) {
+		for (int j = 0; j < NUM_COLS; j++) {
+			if (i == x_position && j == y_position) {
+				if (was_hit) {
+					board[i][j] = '*';
+				}
+				else {
+					board[i][j] = 'M';
+				}
+			}
+		}
+	}
+}
+
+//Function Name: int determine_winner(char board[][NUM_COLS])
+//Description: Determines if either player has won by checking the number of hits. (17 to destroy all ships)
+//Parameters: Character array board. 
+//Output: 1 if a win, 0 if not a win. 
+
+int determine_winner(char board[][NUM_COLS]) {
+	int hit_count = 0;
+	for (int i = 0; i < NUM_ROWS; i++) {
+		for (int j = 0; j < NUM_COLS; j++) {
+			if (board[i][j] == '*') {
+				hit_count++;
+			}
+		}
+	}
+	if (hit_count == 17) { //if all ship symbols (total 17) have been hit (replaced by *)
+		return 1; //win
+	}
+	return 0; //not win
+}
+
+//Function Name: void output_current_move(FILE* outfile, int starts_first, int x_position, int y_position, int was_hit, int was_sunk)
+//Description: Writes the summary of each move to the battleship.log file. 
+//Parameters: Outfile, variables coresponding to current player, shot cordinates, info on whether it was a hit/miss or sunk any ships. 
+//Output: Writes all above info to the oufile.
+
+void output_current_move(FILE* outfile, int starts_first, int x_position, int y_position, int was_hit, int was_sunk) {
+	fprintf(outfile, "Gameplay Events: \n");
+
+	switch (starts_first) {
+	case 1: //prints details regarding player 1
+		if (was_hit) {
+			if (was_sunk) {
+				fprintf(outfile, "Player 1 shot at (%d, %d). It was a hit, the computer's ship sank. \n", x_position, y_position);
+
+			}
+			else {
+				fprintf(outfile, "Player 1 shot at (%d, %d). It was a hit. \n", x_position, y_position);
+			}
+		}
+		else {
+			fprintf(outfile, "Player 1 shot at (%d, %d). It was a miss. \n", x_position, y_position);
+		}
+		break;
+	case 2: //prints details regarding computer
+		if (was_hit) {
+			if (was_sunk) {
+				fprintf(outfile, "The computer shot at (%d, %d). It was a hit, the player's ship sank. \n", x_position, y_position);
+
+			}
+			else {
+				fprintf(outfile, "The computer shot at (%d, %d). It was a hit. \n", x_position, y_position);
+			}
+		}
+		else {
+			fprintf(outfile, "The computer shot at (%d, %d). It was a miss. \n", x_position, y_position);
+		}
+		break;
+	}
+	
+
+}
+
+//Function Name: void output_stats(FILE* outfile, Stats player_one, Stats player_two)
+//Description: Writes all the game stats/data to the log file. 
+//Parameters: Pointer to outfile, stats struct of player one and computer. 
+//Output: Writes all round info to the outfile. 
+
+void output_stats(FILE* outfile, Stats player_one, Stats player_two) {
+
+	fprintf(outfile, "\nPlayer One Stats: \n\n");
+	fprintf(outfile, "Number of Hits: %d \n", player_one.number_hits);
+	fprintf(outfile, "Number of Misses: %d \n", player_one.number_misses);
+	fprintf(outfile, "Total Shots: %d \n", player_one.total_shots);
+	fprintf(outfile, "Hit to Miss Ratio Percentage: %d \n\n", player_one.hits_misses);
+
+	fprintf(outfile, "Computer Stats: \n\n");
+	fprintf(outfile, "Number of Hits: %d \n", player_two.number_hits);
+	fprintf(outfile, "Number of Misses: %d \n", player_two.number_misses);
+	fprintf(outfile, "Total Shots: %d \n", player_two.total_shots);
+	fprintf(outfile, "Hit to Miss Ratio Percentage: %d \n\n", player_two.hits_misses);
+
 }
